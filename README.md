@@ -15,12 +15,7 @@
 
 ## Быстрый старт
 
-Нужны Docker и Docker Compose v2. `gradle-wrapper.jar` хранится в Git LFS — выполните `git lfs install` до клонирования.
-
 ```bash
-git clone https://github.com/Mon600/Broker.git
-cd Broker
-cp .env.example .env
 docker compose up --build
 ```
 
@@ -40,34 +35,6 @@ docker compose up --build
 
 Остановка: `docker compose down` (с удалением данных: `docker compose down -v`).
 
-## Локальная сборка и отладка
-
-Поднимите только инфраструктуру:
-
-```bash
-docker compose up -d postgres redis kafka
-```
-
-store (из `src/store`):
-
-```bash
-cd src/store
-./gradlew test bootJar            # тесты используют Testcontainers — нужен запущенный Docker
-DB_URL=jdbc:postgresql://localhost:5432/store POSTGRES_USER=admin POSTGRES_PASSWORD=admin \
-KAFKA_BOOTSTRAP_SERVERS=localhost:9092 SPRING_DATA_REDIS_HOST=localhost ./gradlew bootRun
-```
-
-worker (из `src/worker`, запускать после store):
-
-```bash
-cd src/worker
-DB_URL=jdbc:postgresql://localhost:5432/store POSTGRES_USER=admin POSTGRES_PASSWORD=admin \
-KAFKA_BOOTSTRAP_SERVERS=localhost:9092 EVENT_INTERVAL_MS=3000 ./gradlew bootRun
-```
-
-Удалённая отладка (JDWP): добавьте в `.env` в `JAVA_OPTS` значение
-`-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005` и пробросьте порт 5005 нужного сервиса в `docker-compose.yml`.
-
 ## Проверка функционала
 
 1. **Realtime.** Откройте http://localhost:8080/ — статусы WebSocket и SSE должны стать «Подключён», примерно раз в 3 с приходят обновления товаров. То же в консоли:
@@ -84,16 +51,6 @@ docker compose logs -f store
 ```
 
 3. **REST API** (авторизации нет):
-
-```bash
-curl -s http://localhost:8080/api/v1/products
-curl -s "http://localhost:8080/api/v1/clients?limit=10&offset=0"
-curl -s http://localhost:8080/api/v1/suppliers
-
-# списать товар (id возьмите из списка товаров)
-curl -s -X PATCH -H 'Content-Type: application/json' -d '{"decreaseBy":1}' \
-  http://localhost:8080/api/v1/products/<PRODUCT_ID>/stock
-```
 
 | Группа | Маршруты |
 |---|---|
